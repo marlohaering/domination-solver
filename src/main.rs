@@ -28,7 +28,7 @@ impl SolutionSet {
     }
 
     fn get_uncovered_nodes(&self) -> HashSet<NodeIndex> {
-        let mut uncovered_nodes: HashSet<NodeIndex> = self.g.node_indices().collect();
+        let uncovered_nodes: HashSet<NodeIndex> = self.g.node_indices().collect();
         uncovered_nodes
             .difference(&self.get_covered_nodes())
             .cloned()
