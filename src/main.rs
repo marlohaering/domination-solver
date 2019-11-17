@@ -26,6 +26,14 @@ impl SolutionSet {
         }
         covered_nodes
     }
+
+    fn get_uncovered_nodes(&self) -> HashSet<NodeIndex> {
+        let mut uncovered_nodes: HashSet<NodeIndex> = self.g.node_indices().collect();
+        uncovered_nodes
+            .difference(&self.get_covered_nodes())
+            .cloned()
+            .collect()
+    }
 }
 
 trait BallType {
@@ -83,7 +91,8 @@ fn main() {
     };
 
     // print!("{:?}", test_ss);
-    print!("{:?}", test_ss.get_covered_nodes());
+    println!("{:?}", test_ss.get_covered_nodes());
+    println!("{:?}", test_ss.get_uncovered_nodes());
 
     // let neighbors = graph.neighbors(node_index(0));
     // neighbors.clone().for_each(|x| println!("{:?}", x));
