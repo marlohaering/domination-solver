@@ -34,21 +34,28 @@ impl SolutionSet {
             .cloned()
             .collect()
     }
+
+    fn get_w_value(&self, a: NodeIndex) -> usize {
+        self.g
+            .get_ball(a)
+            .difference(&self.get_covered_nodes())
+            .count()
+    }
 }
 
 trait BallType {
-    fn get_ball(&self, a: NodeIndex) -> Neighbors<()>;
+    fn get_ball(&self, a: NodeIndex) -> HashSet<NodeIndex>;
 }
 
 impl BallType for Graph<&str, (), Undirected> {
-    fn get_ball(&self, a: NodeIndex) -> Neighbors<()> {
-        return self.neighbors(a);
+    fn get_ball(&self, a: NodeIndex) -> HashSet<NodeIndex> {
+        self.neighbors(a).clone().collect()
     }
 }
 
 impl BallType for SolutionSet {
-    fn get_ball(&self, a: NodeIndex) -> Neighbors<()> {
-        return self.g.neighbors(a);
+    fn get_ball(&self, a: NodeIndex) -> HashSet<NodeIndex> {
+        self.g.neighbors(a).clone().collect()
     }
 }
 
@@ -93,6 +100,7 @@ fn main() {
     // print!("{:?}", test_ss);
     println!("{:?}", test_ss.get_covered_nodes());
     println!("{:?}", test_ss.get_uncovered_nodes());
+    println!("{:?}", test_ss.get_w_value(node_index(5)));
 
     // let neighbors = graph.neighbors(node_index(0));
     // neighbors.clone().for_each(|x| println!("{:?}", x));
