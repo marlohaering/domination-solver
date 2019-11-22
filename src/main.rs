@@ -1,21 +1,33 @@
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt::Debug;
 
 // use petgraph::dot::{Config, Dot};
 use petgraph::graph::node_index;
-use petgraph::graph::Neighbors;
+// use petgraph::graph::Neighbors;
 use petgraph::graph::NodeIndex;
 use petgraph::Graph;
 use petgraph::Undirected;
 
 #[derive(Debug)]
-struct SolutionSet {
-    g: Graph<&'static str, (), Undirected>,
+struct SolutionSet<'a> {
+    g: &'a Graph<&'a str, (), Undirected>,
     s: HashSet<NodeIndex>,
     t: HashSet<NodeIndex>,
+    w: HashMap<NodeIndex, i32>,
 }
 
-impl SolutionSet {
+impl SolutionSet<'_> {
+    fn new<'a>(
+        g: &'a Graph<&'a str, (), Undirected>,
+        s: HashSet<NodeIndex>,
+        t: HashSet<NodeIndex>,
+        w: HashMap<NodeIndex, i32>,
+    ) -> SolutionSet<'a> {
+        let ss = SolutionSet { g, s, t, w };
+        return ss;
+    }
+
     fn get_covered_nodes(&self) -> HashSet<NodeIndex> {
         let mut covered_nodes = HashSet::<NodeIndex>::new();
         for s_node in self.s.iter() {
@@ -53,7 +65,7 @@ impl BallType for Graph<&str, (), Undirected> {
     }
 }
 
-impl BallType for SolutionSet {
+impl BallType for SolutionSet<'_> {
     fn get_ball(&self, a: NodeIndex) -> HashSet<NodeIndex> {
         self.g.neighbors(a).clone().collect()
     }
@@ -85,17 +97,19 @@ fn main() {
         (7, 8),
         (1, 7),
     ]);
+    let graph = graph;
 
     // let nodes = graph.get_ball(node_index(2));
     // nodes.for_each(|n| println!("{:?}", n));
 
     // println!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]));
 
-    let test_ss = SolutionSet {
-        g: graph,
-        s: vec![node_index(0)].iter().cloned().collect(),
-        t: HashSet::new(),
-    };
+    let test_ss = SolutionSet::new(
+        &graph,
+        vec![node_index(0)].iter().cloned().collect(),
+        HashSet::new(),
+        HashMap::new(),
+    );
 
     // print!("{:?}", test_ss);
     println!("{:?}", test_ss.get_covered_nodes());
