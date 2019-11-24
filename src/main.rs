@@ -24,7 +24,8 @@ impl SolutionSet<'_> {
         t: HashSet<NodeIndex>,
         w: HashMap<NodeIndex, usize>,
     ) -> SolutionSet<'a> {
-        let ss = SolutionSet { g, s, t, w };
+        let mut ss = SolutionSet { g, s, t, w };
+        ss.update_w_values();
         return ss;
     }
 
@@ -59,7 +60,19 @@ impl SolutionSet<'_> {
             let w_value = self.get_w_value(node);
             self.w.insert(node, w_value);
         }
-        println!("self.w = {:?}", self.w);
+    }
+
+    fn get_max_w_value(&self) -> usize {
+        let max_w_value = self.w.values().max().expect("No w values found!");
+        *max_w_value
+    }
+
+    fn get_lower_bound(&self) -> f32 {
+        if self.get_max_w_value() != 0 {
+            return self.s.len() as f32
+                + self.get_uncovered_nodes().len() as f32 / self.get_max_w_value() as f32;
+        }
+        0f32
     }
 }
 
@@ -69,13 +82,17 @@ trait BallType {
 
 impl BallType for Graph<&str, (), Undirected> {
     fn get_ball(&self, a: NodeIndex) -> HashSet<NodeIndex> {
-        self.neighbors(a).clone().collect()
+        let mut neighbors: HashSet<NodeIndex> = self.neighbors(a).clone().collect();
+        neighbors.insert(a);
+        neighbors
     }
 }
 
 impl BallType for SolutionSet<'_> {
     fn get_ball(&self, a: NodeIndex) -> HashSet<NodeIndex> {
-        self.g.neighbors(a).clone().collect()
+        let mut neighbors: HashSet<NodeIndex> = self.g.neighbors(a).clone().collect();
+        neighbors.insert(a);
+        neighbors
     }
 }
 
@@ -107,12 +124,15 @@ fn main() {
     ]);
     let graph = graph;
 
-    let mut test_ss = SolutionSet::new(
+    let test_ss = SolutionSet::new(
         &graph,
-        vec![node_index(0)].iter().cloned().collect(),
+        vec![node_index(1)].iter().cloned().collect(),
         HashSet::new(),
         HashMap::new(),
     );
 
-    test_ss.update_w_values();
+    println!("test_ss.w = {:?}", test_ss.w);
+    println!("max_w_value = {:?}", test_ss.get_max_w_value());
+    let lower_bound = test_ss.get_lower_bound();
+    println!("lower_bound = {:?}", lower_bound);
 }
