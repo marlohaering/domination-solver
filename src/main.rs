@@ -1,13 +1,9 @@
-use std::collections::HashMap;
-use std::collections::HashSet;
-use std::fmt::Debug;
-
-// use petgraph::dot::{Config, Dot};
-use petgraph::graph::node_index;
-// use petgraph::graph::Neighbors;
 use petgraph::graph::NodeIndex;
 use petgraph::Graph;
 use petgraph::Undirected;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::fmt::Debug;
 
 #[derive(Debug)]
 struct SolutionSet<'a> {
@@ -15,6 +11,7 @@ struct SolutionSet<'a> {
     s: HashSet<NodeIndex>,
     t: HashSet<NodeIndex>,
     w: HashMap<NodeIndex, usize>,
+    max_w_value_node: Option<NodeIndex>,
 }
 
 impl SolutionSet<'_> {
@@ -24,7 +21,13 @@ impl SolutionSet<'_> {
         t: HashSet<NodeIndex>,
         w: HashMap<NodeIndex, usize>,
     ) -> SolutionSet<'a> {
-        let mut ss = SolutionSet { g, s, t, w };
+        let mut ss = SolutionSet {
+            g,
+            s,
+            t,
+            w,
+            max_w_value_node: None,
+        };
         ss.update_w_values();
         return ss;
     }
@@ -56,9 +59,14 @@ impl SolutionSet<'_> {
     }
 
     fn update_w_values(&mut self) {
+        let mut current_max_w_value: usize = 0;
         for node in self.g.node_indices() {
             let w_value = self.get_w_value(node);
             self.w.insert(node, w_value);
+            if w_value > current_max_w_value {
+                self.max_w_value_node = Some(node);
+                current_max_w_value = w_value;
+            }
         }
     }
 
@@ -75,6 +83,10 @@ impl SolutionSet<'_> {
         0f32
     }
 
+    fn is_dominated(&self) -> bool {
+        self.get_uncovered_nodes().len() == 0
+    }
+
     fn print_infos(&self) {
         println!("S = {:?}", self.s);
         println!("T = {:?}", self.t);
@@ -84,6 +96,12 @@ impl SolutionSet<'_> {
         }
         println!("max_w_value = {:?}", self.get_max_w_value());
         println!("lower_bound = {:?}", self.get_lower_bound());
+        if let Some(max_node) = self.max_w_value_node {
+            println!(
+                "max_w_value_node = {:?}",
+                self.g.raw_nodes()[max_node.index()].weight
+            );
+        }
     }
 }
 
@@ -135,12 +153,16 @@ fn main() {
     ]);
     let graph = graph;
 
+    let mut lower_bounds: (f32, Option<&SolutionSet>) = (std::f32::INFINITY, None);
+
     let test_ss = SolutionSet::new(
         &graph,
         HashSet::new(), //vec![node_index(1)].iter().cloned().collect(),
         HashSet::new(),
         HashMap::new(),
     );
+
+    lower_bounds = (test_ss.get_lower_bound(), Some(&test_ss));
 
     test_ss.print_infos();
 }
