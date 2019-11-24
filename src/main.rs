@@ -14,7 +14,7 @@ struct SolutionSet<'a> {
     g: &'a Graph<&'a str, (), Undirected>,
     s: HashSet<NodeIndex>,
     t: HashSet<NodeIndex>,
-    w: HashMap<NodeIndex, i32>,
+    w: HashMap<NodeIndex, usize>,
 }
 
 impl SolutionSet<'_> {
@@ -22,7 +22,7 @@ impl SolutionSet<'_> {
         g: &'a Graph<&'a str, (), Undirected>,
         s: HashSet<NodeIndex>,
         t: HashSet<NodeIndex>,
-        w: HashMap<NodeIndex, i32>,
+        w: HashMap<NodeIndex, usize>,
     ) -> SolutionSet<'a> {
         let ss = SolutionSet { g, s, t, w };
         return ss;
@@ -52,6 +52,14 @@ impl SolutionSet<'_> {
             .get_ball(a)
             .difference(&self.get_covered_nodes())
             .count()
+    }
+
+    fn update_w_values(&mut self) {
+        for node in self.g.node_indices() {
+            let w_value = self.get_w_value(node);
+            self.w.insert(node, w_value);
+        }
+        println!("self.w = {:?}", self.w);
     }
 }
 
@@ -99,23 +107,12 @@ fn main() {
     ]);
     let graph = graph;
 
-    // let nodes = graph.get_ball(node_index(2));
-    // nodes.for_each(|n| println!("{:?}", n));
-
-    // println!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]));
-
-    let test_ss = SolutionSet::new(
+    let mut test_ss = SolutionSet::new(
         &graph,
         vec![node_index(0)].iter().cloned().collect(),
         HashSet::new(),
         HashMap::new(),
     );
 
-    // print!("{:?}", test_ss);
-    println!("{:?}", test_ss.get_covered_nodes());
-    println!("{:?}", test_ss.get_uncovered_nodes());
-    println!("{:?}", test_ss.get_w_value(node_index(5)));
-
-    // let neighbors = graph.neighbors(node_index(0));
-    // neighbors.clone().for_each(|x| println!("{:?}", x));
+    test_ss.update_w_values();
 }
