@@ -74,6 +74,17 @@ impl SolutionSet<'_> {
         }
         0f32
     }
+
+    fn print_infos(&self) {
+        println!("S = {:?}", self.s);
+        println!("T = {:?}", self.t);
+        for (node, w_value) in &self.w {
+            let weight = self.g.raw_nodes()[node.index()].weight;
+            println!("{} = {}", weight, w_value);
+        }
+        println!("max_w_value = {:?}", self.get_max_w_value());
+        println!("lower_bound = {:?}", self.get_lower_bound());
+    }
 }
 
 trait BallType {
@@ -126,13 +137,10 @@ fn main() {
 
     let test_ss = SolutionSet::new(
         &graph,
-        vec![node_index(1)].iter().cloned().collect(),
+        HashSet::new(), //vec![node_index(1)].iter().cloned().collect(),
         HashSet::new(),
         HashMap::new(),
     );
 
-    println!("test_ss.w = {:?}", test_ss.w);
-    println!("max_w_value = {:?}", test_ss.get_max_w_value());
-    let lower_bound = test_ss.get_lower_bound();
-    println!("lower_bound = {:?}", lower_bound);
+    test_ss.print_infos();
 }
