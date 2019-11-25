@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt::Debug;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct SolutionSet<'a> {
     g: &'a Graph<&'a str, (), Undirected>,
     s: HashSet<NodeIndex>,
@@ -19,13 +19,12 @@ impl SolutionSet<'_> {
         g: &'a Graph<&'a str, (), Undirected>,
         s: HashSet<NodeIndex>,
         t: HashSet<NodeIndex>,
-        w: HashMap<NodeIndex, usize>,
     ) -> SolutionSet<'a> {
         let mut ss = SolutionSet {
             g,
             s,
             t,
-            w,
+            w: HashMap::new(),
             max_w_value_node: None,
         };
         ss.update_w_values();
@@ -103,6 +102,17 @@ impl SolutionSet<'_> {
             );
         }
     }
+
+    fn create_new_solutions_sets(&self, a: NodeIndex) -> (SolutionSet, SolutionSet) {
+        let mut new_s = self.s.clone();
+        new_s.insert(a);
+        let ss_with = SolutionSet::new(self.g, new_s, self.t.clone());
+
+        let mut new_t = self.t.clone();
+        new_t.insert(a);
+        let ss_without = SolutionSet::new(self.g, self.s.clone(), new_t);
+        (ss_with, ss_without)
+    }
 }
 
 trait BallType {
@@ -153,16 +163,33 @@ fn main() {
     ]);
     let graph = graph;
 
-    let mut lower_bounds: (f32, Option<&SolutionSet>) = (std::f32::INFINITY, None);
-
-    let test_ss = SolutionSet::new(
+    let first_ss = SolutionSet::new(
         &graph,
         HashSet::new(), //vec![node_index(1)].iter().cloned().collect(),
         HashSet::new(),
-        HashMap::new(),
     );
 
-    lower_bounds = (test_ss.get_lower_bound(), Some(&test_ss));
+    let mut found_domination = false;
+    let mut lower_bounds: (f32, SolutionSet) = (first_ss.get_lower_bound(), first_ss);
 
-    test_ss.print_infos();
+    // first_ss.print_infos();
+
+    // while !found_domination {
+
+    let max_w_value_node = lower_bounds.1.max_w_value_node;
+    let new_solution_sets = lower_bounds
+        .1
+        .create_new_solutions_sets(max_w_value_node.expect("No w value node found!"))
+        .clone();
+
+    if new_solution_sets.0.get_lower_bound() < lower_bounds.0 {
+        lower_bounds.0 = new_solution_sets.0.get_lower_bound();
+        lower_bounds.1 = new_solution_sets.0;
+    }
+
+    if new_solution_sets.1.get_lower_bound() < lower_bounds.0 {
+        lower_bounds.0 = new_solution_sets.1.get_lower_bound();
+        lower_bounds.1 = new_solution_sets.1;
+    }
+    // }
 }
