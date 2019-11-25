@@ -169,27 +169,29 @@ fn main() {
         HashSet::new(),
     );
 
-    let mut found_domination = false;
-    let mut lower_bounds: (f32, SolutionSet) = (first_ss.get_lower_bound(), first_ss);
+    let found_domination = false;
+    let mut lowest_bound = first_ss.get_lower_bound();
+    let mut lowest_ss = first_ss;
 
-    // first_ss.print_infos();
+    while !found_domination {
+        let (ss_with_node, ss_without_node) = {
+            let max_w_value_node = lowest_ss.max_w_value_node.expect("No max w value found!");
+            let next_ssets = lowest_ss.create_new_solutions_sets(max_w_value_node);
 
-    // while !found_domination {
+            let ss_with_node = next_ssets.0.clone();
+            let ss_without_node = next_ssets.1.clone();
 
-    let max_w_value_node = lower_bounds.1.max_w_value_node;
-    let new_solution_sets = lower_bounds
-        .1
-        .create_new_solutions_sets(max_w_value_node.expect("No w value node found!"))
-        .clone();
+            (ss_with_node, ss_without_node)
+        };
 
-    if new_solution_sets.0.get_lower_bound() < lower_bounds.0 {
-        lower_bounds.0 = new_solution_sets.0.get_lower_bound();
-        lower_bounds.1 = new_solution_sets.0;
+        if ss_with_node.get_lower_bound() < lowest_bound {
+            lowest_bound = ss_with_node.get_lower_bound();
+            lowest_ss = ss_with_node;
+            // update lower bound
+        }
+        if ss_without_node.get_lower_bound() < lowest_bound {
+            lowest_bound = ss_without_node.get_lower_bound();
+            // update lower bound
+        }
     }
-
-    if new_solution_sets.1.get_lower_bound() < lower_bounds.0 {
-        lower_bounds.0 = new_solution_sets.1.get_lower_bound();
-        lower_bounds.1 = new_solution_sets.1;
-    }
-    // }
 }
