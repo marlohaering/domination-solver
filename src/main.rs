@@ -102,17 +102,19 @@ impl SolutionSet<'_> {
             );
         }
     }
+}
 
-    fn create_new_solutions_sets(&self, a: NodeIndex) -> (SolutionSet, SolutionSet) {
-        let mut new_s = self.s.clone();
-        new_s.insert(a);
-        let ss_with = SolutionSet::new(self.g, new_s, self.t.clone());
+fn create_new_solutions_sets<'b>(ss: &SolutionSet<'b>, a: NodeIndex) -> (SolutionSet<'b>, SolutionSet<'b>) {
+    let sss = ss.clone();
+    let mut new_s = sss.s.clone();
+    new_s.insert(a);
+    let ss_with = SolutionSet::new(sss.g, new_s, sss.t.clone());
 
-        let mut new_t = self.t.clone();
-        new_t.insert(a);
-        let ss_without = SolutionSet::new(self.g, self.s.clone(), new_t);
-        (ss_with, ss_without)
-    }
+    let mut new_t = sss.t.clone();
+    new_t.insert(a);
+    let ss_without = SolutionSet::new(sss.g, sss.s.clone(), new_t);
+
+    (ss_with, ss_without)
 }
 
 trait BallType {
@@ -169,14 +171,15 @@ fn main() {
         HashSet::new(),
     );
 
-    let found_domination = false;
-    let mut lowest_bound = first_ss.get_lower_bound();
+    let mut found_domination = false;
+    let mut lowest_bound = std::f32::INFINITY;
     let mut lowest_ss = first_ss;
 
     while !found_domination {
+
         let (ss_with_node, ss_without_node) = {
             let max_w_value_node = lowest_ss.max_w_value_node.expect("No max w value found!");
-            let next_ssets = lowest_ss.create_new_solutions_sets(max_w_value_node);
+            let next_ssets = create_new_solutions_sets(& lowest_ss, max_w_value_node);
 
             let ss_with_node = next_ssets.0.clone();
             let ss_without_node = next_ssets.1.clone();
@@ -187,11 +190,20 @@ fn main() {
         if ss_with_node.get_lower_bound() < lowest_bound {
             lowest_bound = ss_with_node.get_lower_bound();
             lowest_ss = ss_with_node;
-            // update lower bound
+            println!("Found lower bound with node");
+            lowest_ss.print_infos();
         }
         if ss_without_node.get_lower_bound() < lowest_bound {
             lowest_bound = ss_without_node.get_lower_bound();
-            // update lower bound
+            lowest_ss = ss_without_node;
+            println!("Found lower without node");
+            lowest_ss.print_infos();
         }
+
+        if lowest_ss.is_dominated()
+            {
+                lowest_ss.print_infos();
+                found_domination = true;
+            }
     }
 }
