@@ -59,7 +59,17 @@ impl SolutionSet<'_> {
 
     fn update_w_values(&mut self) {
         let mut current_max_w_value: usize = 0;
-        for node in self.g.node_indices() {
+        let nodes: HashSet<NodeIndex> = self
+            .g
+            .node_indices()
+            .collect::<HashSet<NodeIndex>>()
+            .difference(&self.s)
+            .cloned()
+            .collect::<HashSet<NodeIndex>>()
+            .difference(&self.t)
+            .cloned()
+            .collect();
+        for node in nodes {
             let w_value = self.get_w_value(node);
             self.w.insert(node, w_value);
             if w_value > current_max_w_value {
@@ -104,7 +114,10 @@ impl SolutionSet<'_> {
     }
 }
 
-fn create_new_solutions_sets<'b>(ss: &SolutionSet<'b>, a: NodeIndex) -> (SolutionSet<'b>, SolutionSet<'b>) {
+fn create_new_solutions_sets<'b>(
+    ss: &SolutionSet<'b>,
+    a: NodeIndex,
+) -> (SolutionSet<'b>, SolutionSet<'b>) {
     let sss = ss.clone();
     let mut new_s = sss.s.clone();
     new_s.insert(a);
@@ -177,9 +190,11 @@ fn main() {
 
     while !found_domination {
 
+        lowest_ss.print_infos();
+
         let (ss_with_node, ss_without_node) = {
             let max_w_value_node = lowest_ss.max_w_value_node.expect("No max w value found!");
-            let next_ssets = create_new_solutions_sets(& lowest_ss, max_w_value_node);
+            let next_ssets = create_new_solutions_sets(&lowest_ss, max_w_value_node);
 
             let ss_with_node = next_ssets.0.clone();
             let ss_without_node = next_ssets.1.clone();
@@ -187,23 +202,29 @@ fn main() {
             (ss_with_node, ss_without_node)
         };
 
+        println!("New solution sets:");
+
+        ss_with_node.print_infos();
+        ss_without_node.print_infos();
+
         if ss_with_node.get_lower_bound() < lowest_bound {
             lowest_bound = ss_with_node.get_lower_bound();
             lowest_ss = ss_with_node;
-            println!("Found lower bound with node");
-            lowest_ss.print_infos();
+            // println!("Found lower bound with node");
+            // lowest_ss.print_infos();
         }
         if ss_without_node.get_lower_bound() < lowest_bound {
             lowest_bound = ss_without_node.get_lower_bound();
             lowest_ss = ss_without_node;
-            println!("Found lower without node");
-            lowest_ss.print_infos();
+            // println!("Found lower without node");
+            // lowest_ss.print_infos();
         }
 
-        if lowest_ss.is_dominated()
-            {
-                lowest_ss.print_infos();
-                found_domination = true;
-            }
+        if lowest_ss.is_dominated() {
+            lowest_ss.print_infos();
+            found_domination = true;
+        }
+
+        panic!();
     }
 }
