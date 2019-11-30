@@ -97,7 +97,7 @@ impl SolutionSet<'_> {
     }
 
     fn print_infos(&self) {
-        println!("S = {:?}", self.s);
+        println!("S = {:?}", self.s); // TODO: Print letters for nodes
         println!("T = {:?}", self.t);
         for (node, w_value) in &self.w {
             let weight = self.g.raw_nodes()[node.index()].weight;
@@ -225,6 +225,6 @@ fn main() {
             found_domination = true;
         }
 
-        panic!();
+        
     }
 }
