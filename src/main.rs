@@ -97,8 +97,19 @@ impl SolutionSet<'_> {
     }
 
     fn print_infos(&self) {
-        println!("S = {:?}", self.s); // TODO: Print letters for nodes
-        println!("T = {:?}", self.t);
+        let s_nodes: HashSet<&str> = self
+            .s
+            .iter()
+            .map(|&node| self.g.raw_nodes()[node.index()].weight)
+            .collect();
+        println!("S = {:?}", s_nodes);
+
+        let t_nodes: HashSet<&str> = self
+            .t
+            .iter()
+            .map(|&node| self.g.raw_nodes()[node.index()].weight)
+            .collect();
+        println!("T = {:?}", t_nodes);
         for (node, w_value) in &self.w {
             let weight = self.g.raw_nodes()[node.index()].weight;
             println!("{} = {}", weight, w_value);
@@ -184,13 +195,19 @@ fn main() {
         HashSet::new(),
     );
 
-    let mut found_domination = false;
-    let mut lowest_bound = std::f32::INFINITY;
-    let mut lowest_ss = first_ss;
+    let mut solution_sets = vec![(std::f32::INFINITY, first_ss.clone())];
+    let mut lowest_ss: SolutionSet;
 
-    while !found_domination {
-
+    loop {
+        lowest_ss = solution_sets[0].1.clone();
         lowest_ss.print_infos();
+
+        if lowest_ss.is_dominated() {
+            lowest_ss.print_infos();
+            break;
+        }
+
+        solution_sets.remove(0);
 
         let (ss_with_node, ss_without_node) = {
             let max_w_value_node = lowest_ss.max_w_value_node.expect("No max w value found!");
@@ -207,24 +224,20 @@ fn main() {
         ss_with_node.print_infos();
         ss_without_node.print_infos();
 
-        if ss_with_node.get_lower_bound() < lowest_bound {
-            lowest_bound = ss_with_node.get_lower_bound();
-            lowest_ss = ss_with_node;
-            // println!("Found lower bound with node");
-            // lowest_ss.print_infos();
-        }
-        if ss_without_node.get_lower_bound() < lowest_bound {
-            lowest_bound = ss_without_node.get_lower_bound();
-            lowest_ss = ss_without_node;
-            // println!("Found lower without node");
-            // lowest_ss.print_infos();
-        }
-
-        if lowest_ss.is_dominated() {
-            lowest_ss.print_infos();
-            found_domination = true;
-        }
-
-        
+        solution_sets.push((ss_with_node.get_lower_bound(), ss_with_node.clone()));
+        solution_sets.push((ss_without_node.get_lower_bound(), ss_without_node.clone()));
+        solution_sets.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+        // if ss_with_node.get_lower_bound() < lowest_bound {
+        //     lowest_bound = ss_with_node.get_lower_bound();
+        //     lowest_ss = ss_with_node;
+        //     // println!("Found lower bound with node");
+        //     // lowest_ss.print_infos();
+        // }
+        // if ss_without_node.get_lower_bound() < lowest_bound {
+        //     lowest_bound = ss_without_node.get_lower_bound();
+        //     lowest_ss = ss_without_node;
+        //     // println!("Found lower without node");
+        //     // lowest_ss.print_infos();
+        // }
     }
 }
