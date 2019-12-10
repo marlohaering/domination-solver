@@ -161,7 +161,7 @@ impl BallType for SolutionSet<'_> {
     }
 }
 
-fn main() {
+fn create_test_graph() -> Graph<&'static str, (), Undirected> {
     let mut graph = Graph::<&str, (), Undirected>::new_undirected();
     graph.add_node("a"); // 0
     graph.add_node("b"); // 1
@@ -187,7 +187,25 @@ fn main() {
         (7, 8),
         (1, 7),
     ]);
-    let graph = graph;
+    graph
+}
+
+fn create_test_graph2() -> Graph<&'static str, (), Undirected> {
+    let mut graph = Graph::<&str, (), Undirected>::new_undirected();
+    graph.add_node("a"); // 0
+    graph.add_node("b"); // 1
+    graph.add_node("c"); // 2
+    graph.add_node("d"); // 2
+    graph.add_node("e"); // 2
+    graph.add_node("f"); // 2
+    graph.add_node("g"); // 2
+    graph.add_node("h"); // 2
+    graph.extend_with_edges(&[(0, 1), (0, 2)]);
+    graph
+}
+
+fn main() {
+    let graph = create_test_graph2();
 
     let first_ss = SolutionSet::new(
         &graph,
