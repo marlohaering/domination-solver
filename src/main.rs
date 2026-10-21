@@ -1,10 +1,11 @@
 //! Command line front end.
 //!
-//! Usage: `domination-solver [FILE]`
+//! Usage: `domination-solver [-j THREADS] [FILE]`
 //!
 //! The graph is read from FILE (or stdin), one entry per line: `a b` adds an
 //! edge, a single name adds an isolated vertex. `#` starts a comment.
 //! Without input from a file or pipe, a built-in test graph is solved.
+//! By default all CPU cores are used.
 
 use std::collections::HashMap;
 use std::io::{IsTerminal, Read};
@@ -37,7 +38,17 @@ fn parse(input: &str) -> (Vec<String>, Vec<(usize, usize)>) {
 }
 
 fn main() {
-    let input = match std::env::args().nth(1) {
+    let mut args = std::env::args().skip(1);
+    let mut threads = std::thread::available_parallelism().map_or(1, |n| n.get());
+    let mut path = None;
+    while let Some(arg) = args.next() {
+        if arg == "-j" {
+            threads = args.next().and_then(|t| t.parse().ok()).expect("-j needs a number");
+        } else {
+            path = Some(arg);
+        }
+    }
+    let input = match path {
         Some(path) => std::fs::read_to_string(&path).expect("cannot read input file"),
         None if !std::io::stdin().is_terminal() => {
             let mut s = String::new();
@@ -48,10 +59,10 @@ fn main() {
     };
     let (names, edges) = parse(&input);
     let start = Instant::now();
-    let set = domination_solver::minimum_dominating_set(names.len(), &edges);
+    let set = domination_solver::minimum_dominating_set_parallel(names.len(), &edges, threads);
     let set_names: Vec<&str> = set.iter().map(|&v| names[v].as_str()).collect();
     println!("vertices: {}, edges: {}", names.len(), edges.len());
     println!("domination number: {}", set.len());
     println!("dominating set: {}", set_names.join(" "));
-    println!("time: {:?}", start.elapsed());
+    println!("time: {:?} ({} threads)", start.elapsed(), threads);
 }
