@@ -1,0 +1,5 @@
+# Cross-origin isolation enables SharedArrayBuffer, so the solver can run
+# on all CPU cores.
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp

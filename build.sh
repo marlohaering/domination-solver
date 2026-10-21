@@ -8,4 +8,4 @@ cd "$(dirname "$0")"
 cargo build --release --lib --target wasm32-unknown-unknown
 cp target/wasm32-unknown-unknown/release/domination_solver.wasm web/
 echo "Built web/domination_solver.wasm"
-echo "Serve with: python3 -m http.server -d web 8000  ->  http://localhost:8000"
+echo "Serve with: ./serve.py  ->  http://localhost:8000"

@@ -86,36 +86,53 @@ function draw() {
 requestAnimationFrame(draw);
 
 // --- Solving ---------------------------------------------------------------
-let worker = null;
+// Workers share memory only when the page is cross-origin isolated (served
+// with COOP/COEP headers, see _headers and serve.py). Otherwise use one.
+const THREADS = crossOriginIsolated ? navigator.hardwareConcurrency || 4 : 1;
+let workers = [];
 
-function stopWorker() {
-  worker?.terminate();
-  worker = null;
+function stopWorkers() {
+  workers.forEach((w) => w.terminate());
+  workers = [];
   $("solve").disabled = false;
   $("cancel").disabled = true;
 }
 
 $("solve").onclick = () => {
-  stopWorker();
+  stopWorkers();
   setGraph(parse(input.value));
-  worker = new Worker("worker.js");
+  const n = graph.names.length, edges = graph.edges;
+  const state = new Int32Array(new (THREADS > 1 ? SharedArrayBuffer : ArrayBuffer)(4 * (n + 1)));
+  state.fill(0x7fffffff, 1);
+  const start = performance.now(), results = [];
   $("solve").disabled = true;
   $("cancel").disabled = false;
-  status.textContent = `Solving (${graph.names.length} vertices, ${graph.edges.length} edges)...`;
-  worker.onmessage = ({ data }) => {
-    stopWorker();
-    if (data.error) { status.textContent = "Error: " + data.error; return; }
-    solution = new Set(data.set);
-    status.textContent =
-      `Domination number: ${data.set.length}\n` +
-      `Set: ${data.set.map((v) => graph.names[v]).join(" ")}\n` +
-      `Time: ${data.ms.toFixed(1)} ms`;
-  };
-  worker.onerror = (e) => { stopWorker(); status.textContent = "Worker error: " + e.message; };
-  worker.postMessage({ n: graph.names.length, edges: graph.edges });
+  status.textContent = `Solving (${n} vertices, ${edges.length} edges, ${THREADS} threads)...`;
+  for (let i = 0; i < THREADS; i++) {
+    const worker = new Worker("worker.js");
+    worker.onmessage = ({ data }) => {
+      if (data.error) { stopWorkers(); status.textContent = "Error: " + data.error; return; }
+      results.push(data.sets);
+      if (results.length < THREADS) return;
+      // Best set per connected component over all workers.
+      const set = results[0].flatMap((_, c) =>
+        results.map((r) => r[c]).reduce((a, b) => (b.length < a.length ? b : a)));
+      set.sort((a, b) => a - b);
+      const ms = performance.now() - start;
+      stopWorkers();
+      solution = new Set(set);
+      status.textContent =
+        `Domination number: ${set.length}\n` +
+        `Set: ${set.map((v) => graph.names[v]).join(" ")}\n` +
+        `Time: ${ms.toFixed(1)} ms (${THREADS} threads)`;
+    };
+    worker.onerror = (e) => { stopWorkers(); status.textContent = "Worker error: " + e.message; };
+    worker.postMessage({ n, edges, state: state.buffer, splitTarget: THREADS > 1 ? 64 * THREADS : 1 });
+    workers.push(worker);
+  }
 };
 
-$("cancel").onclick = () => { stopWorker(); status.textContent = "Cancelled."; };
+$("cancel").onclick = () => { stopWorkers(); status.textContent = "Cancelled."; };
 
 for (const id of Object.keys(EXAMPLES)) {
   $(id).onclick = () => { input.value = EXAMPLES[id]; setGraph(parse(input.value)); };
