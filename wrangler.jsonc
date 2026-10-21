@@ -1,0 +1,8 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "domination-solver",
+  "compatibility_date": "2026-10-21",
+  // Static site only: web/ is served as-is, including the prebuilt .wasm.
+  "assets": { "directory": "./web" },
+  "routes": [{ "pattern": "domination.haering.me", "custom_domain": true }]
+}
